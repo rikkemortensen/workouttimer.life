@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Interval Timer</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:           #0f0f13;
+  --surface:      #1a1a22;
+  --surface2:     #22222d;
+  --border:       #2e2e3e;
+  --accent:       #7c6fe0;
+  --accent-hover: #9088e8;
+  --text:         #e8e8f0;
+  --text-muted:   #7a7a9a;
+  --danger:       #e06060;
+  --radius:       12px;
+}
+body { background: var(--bg); color: var(--text); font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; min-height: 100vh; }
+.hidden { display: none !important; }
+
+/* ─── AUTH (disabled — login turned off for now) ───
+#auth-page { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; }
+.auth-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); width: 100%; max-width: 400px; overflow: hidden; }
+.auth-tabs { display: flex; border-bottom: 1px solid var(--border); }
+.auth-tab { flex: 1; padding: 16px; background: none; border: none; color: var(--text-muted); font-size: 15px; cursor: pointer; transition: color .2s, background .2s; }
+.auth-tab.active { color: var(--text); border-bottom: 2px solid var(--accent); margin-bottom: -1px; background: var(--surface2); }
+.auth-body { padding: 28px; }
+.auth-form { display: flex; flex-direction: column; gap: 16px; }
+.remember-row { display: flex; align-items: center; justify-content: space-between; }
+.remember-label { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-muted); cursor: pointer; user-select: none; }
+input[type="checkbox"] { accent-color: var(--accent); width: 15px; height: 15px; cursor: pointer; }
+.link-btn { background: none; border: none; color: var(--accent); font-size: 13px; cursor: pointer; padding: 0; }
+.link-btn:hover { text-decoration: underline; }
+.auth-back { background: none; border: none; color: var(--text-muted); font-size: 13px; cursor: pointer; padding: 0; text-align: left; }
+.auth-back:hover { color: var(--text); }
+──────────────────────────────────────────────────── */
+
+label { font-size: 13px; color: var(--text-muted); display: block; margin-bottom: 6px; }
+input[type="text"], input[type="password"], input[type="number"], input[type="email"] {
+  width: 100%; padding: 10px 14px; background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 8px; color: var(--text); font-size: 15px; outline: none; transition: border-color .2s;
+}
+input[type="text"]:focus, input[type="password"]:focus,
+input[type="number"]:focus, input[type="email"]:focus { border-color: var(--accent); }
+.btn-primary { padding: 12px; background: var(--accent); border: none; border-radius: 8px; color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; transition: background .2s; }
+.btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
+.btn-primary:disabled { opacity: .55; cursor: not-allowed; }
+.btn-secondary { padding: 12px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 15px; cursor: pointer; }
+.btn-secondary:hover { background: var(--border); }
+.alert { padding: 10px 14px; border-radius: 8px; font-size: 14px; }
+.alert-error { background: #3a1a1a; border: 1px solid #5a2020; color: #f09090; }
+.form-group { margin-bottom: 0; }
+
+/* ─── APP SHELL ─────────────────────────────────── */
+#app { min-height: 100vh; display: flex; flex-direction: column; }
+.app-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border); background: var(--surface); }
+.app-title { font-size: 17px; font-weight: 700; color: var(--accent); }
+.header-right { display: flex; align-items: center; gap: 12px; }
+.greeting { font-size: 14px; color: var(--text-muted); }
+.signout-btn { background: none; border: 1px solid var(--border); border-radius: 6px; color: var(--text-muted); font-size: 13px; padding: 6px 12px; cursor: pointer; transition: border-color .2s, color .2s; }
+.signout-btn:hover { border-color: var(--danger); color: var(--danger); }
+.app-tabs { display: flex; gap: 8px; }
+.app-tab { background: none; border: 1px solid var(--border); border-radius: 6px; color: var(--text-muted); font-size: 13px; padding: 6px 12px; cursor: pointer; transition: border-color .2s, color .2s, background .2s; }
+.app-tab:hover { color: var(--text); border-color: var(--accent); }
+.app-tab.active { color: var(--text); border-color: var(--accent); background: rgba(124,111,224,.15); }
+
+/* ─── PAGES ─────────────────────────────────────── */
+.page { flex: 1; padding: 24px 20px; max-width: 520px; margin: 0 auto; width: 100%; }
+
+/* HOME */
+.new-timer-btn { display: flex; align-items: center; gap: 10px; width: 100%; padding: 16px 20px; background: var(--accent); border: none; border-radius: var(--radius); color: #fff; font-size: 16px; font-weight: 600; cursor: pointer; margin-bottom: 28px; transition: background .2s; }
+.new-timer-btn:hover { background: var(--accent-hover); }
+.plus-icon { font-size: 22px; line-height: 1; }
+.section-label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 12px; }
+.timer-list { display: flex; flex-direction: column; gap: 10px; }
+.timer-item { display: flex; align-items: center; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; cursor: pointer; transition: border-color .2s; }
+.timer-item:hover { border-color: var(--accent); }
+.timer-item-info { flex: 1; }
+.timer-item-name { font-size: 15px; font-weight: 600; }
+.timer-item-meta { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+.timer-item-delete { background: none; border: none; color: var(--text-muted); font-size: 18px; padding: 4px 8px; cursor: pointer; border-radius: 6px; }
+.timer-item-delete:hover { color: var(--danger); background: rgba(224,96,96,.12); }
+.empty-state { text-align: center; padding: 48px 24px; color: var(--text-muted); }
+.empty-icon { font-size: 48px; margin-bottom: 16px; opacity: .4; }
+
+/* CREATE */
+.create-header { display: flex; align-items: center; gap: 12px; margin-bottom: 28px; }
+.back-btn { background: none; border: none; color: var(--text-muted); font-size: 26px; cursor: pointer; padding: 2px 6px; line-height: 1; }
+.back-btn:hover { color: var(--text); }
+.page-title { font-size: 20px; font-weight: 700; }
+.create-form { display: flex; flex-direction: column; gap: 20px; }
+.input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.section-title { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .8px; margin: 0; border-top: 1px solid var(--border); padding: 20px 0 12px; }
+.direction-options { display: flex; gap: 10px; }
+.direction-option { flex: 1; }
+.direction-option input[type="radio"] { display: none; }
+.direction-option label { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-size: 14px; color: var(--text-muted); transition: border-color .2s, background .2s, color .2s; }
+.direction-option input[type="radio"]:checked + label { border-color: var(--accent); background: rgba(124,111,224,.15); color: var(--text); }
+
+/* RUN */
+.run-header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+.run-timer-name { font-size: 20px; font-weight: 700; flex: 1; }
+
+/* Ring + countdown overlay */
+.ring-section { position: relative; width: 200px; margin: 8px auto 24px; }
+.ring { width: 200px; height: 200px; transform: rotate(-90deg); display: block; }
+.ring-bg   { fill: none; stroke: #2a2a38; stroke-width: 8; }
+.ring-fill { fill: none; stroke: var(--accent); stroke-width: 8; stroke-linecap: round; }
+.countdown-wrap { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
+.phase-label-top { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .6px; text-align: center; line-height: 1.2; padding: 0 14px; }
+.phase-label-top.long { font-size: 9px; letter-spacing: .3px; }
+.countdown-display { font-size: 52px; font-weight: 800; letter-spacing: -2px; font-variant-numeric: tabular-nums; line-height: 1; }
+.phase-label-bottom { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .6px; text-align: center; line-height: 1.2; padding: 0 12px; }
+
+.progress-pills { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; margin-bottom: 32px; min-height: 16px; }
+.pill { height: 6px; width: 28px; border-radius: 3px; background: var(--surface2); border: 1px solid var(--border); transition: background .3s, border-color .3s, opacity .3s; }
+.pill.active { background: var(--accent); border-color: var(--accent); }
+.pill.done   { background: var(--accent); border-color: transparent; opacity: .4; }
+.run-controls { display: flex; align-items: center; justify-content: center; gap: 16px; }
+.ctrl-btn   { border: none; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background .2s; }
+.ctrl-play  { width: 68px; height: 68px; background: var(--accent); font-size: 24px; color: #fff; }
+.ctrl-play:hover { background: var(--accent-hover); }
+.ctrl-small { width: 48px; height: 48px; background: var(--surface2); border: 1px solid var(--border); font-size: 18px; color: var(--text); }
+.ctrl-small:hover { background: var(--border); }
+.run-done { display: flex; flex-direction: column; align-items: center; padding: 40px 24px; text-align: center; }
+.done-icon  { font-size: 64px; margin-bottom: 16px; }
+.done-title { font-size: 26px; font-weight: 800; margin-bottom: 8px; }
+.done-sub   { color: var(--text-muted); margin-bottom: 32px; }
+.done-btns  { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+.done-btns .btn-primary, .done-btns .btn-secondary { min-width: 140px; }
+
+@media (max-width: 480px) {
+  .input-row { grid-template-columns: 1fr; }
+  .ring-section { width: 180px; }
+  .ring { width: 180px; height: 180px; }
+  .countdown-display { font-size: 44px; }
+}
+
+/* ─── COOKIE BANNER ─────────────────────────────── */
+#cookie-banner {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 10000;
+  background: var(--surface); border-top: 1px solid var(--border);
+  padding: 20px 24px; box-shadow: 0 -4px 24px rgba(0,0,0,.4);
+  animation: slideUp .3s ease;
+}
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.cookie-inner { max-width: 760px; margin: 0 auto; display: flex; align-items: flex-start; gap: 20px; }
+.cookie-text { flex: 1; }
+.cookie-title { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+.cookie-body  { font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+.cookie-body a { color: var(--accent); text-decoration: none; cursor: pointer; }
+.cookie-body a:hover { text-decoration: underline; }
+.cookie-btn { flex-shrink: 0; padding: 10px 22px; background: var(--accent); border: none; border-radius: 8px; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: background .2s; align-self: center; }
+.cookie-btn:hover { background: var(--accent-hover); }
+
+/* Cookie detail modal */
+#cookie-modal { position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 10001; display: flex; align-items: center; justify-content: center; padding: 24px; }
+.cookie-modal-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); max-width: 480px; width: 100%; padding: 28px; max-height: 80vh; overflow-y: auto; }
+.cookie-modal-title { font-size: 18px; font-weight: 700; margin-bottom: 16px; }
+.cookie-section { margin-bottom: 18px; }
+.cookie-section h3 { font-size: 13px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: .6px; margin-bottom: 6px; }
+.cookie-section p  { font-size: 14px; color: var(--text-muted); line-height: 1.6; }
+.cookie-modal-close { width: 100%; margin-top: 8px; padding: 11px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 14px; cursor: pointer; }
+.cookie-modal-close:hover { background: var(--border); }
+
+@media (max-width: 540px) {
+  .cookie-inner { flex-direction: column; gap: 12px; }
+  .cookie-btn { width: 100%; }
+}
+</style>
+</head>
+<body>
+
+<!-- COOKIE BANNER -->
+<div id="cookie-banner" class="hidden">
+  <div class="cookie-inner">
+    <div class="cookie-text">
+      <div class="cookie-title">🍪 Your data & privacy</div>
+      <div class="cookie-body">
+        This app saves the timers you run in your browser's <strong>local storage</strong> ("History")
+        so you can find and re-run them later on this device.
+        Nothing is sent to a server or shared with third parties.
+        <a onclick="showCookieModal()">Learn more</a>
+      </div>
+    </div>
+    <button class="cookie-btn" onclick="acceptCookies()">Got it</button>
+  </div>
+</div>
+
+<!-- COOKIE DETAIL MODAL -->
+<div id="cookie-modal" class="hidden">
+  <div class="cookie-modal-box">
+    <div class="cookie-modal-title">How your data is stored</div>
+    <div class="cookie-section">
+      <h3>localStorage (this device only)</h3>
+      <p>There is currently no account or login. Every timer you start with "GO!" is saved to your browser's localStorage under "History", purely so you can find and re-run it later. This data stays on this device and this browser — it is not synced anywhere.</p>
+    </div>
+    <div class="cookie-section">
+      <h3>No tracking or ads</h3>
+      <p>This app does not use cookies for tracking or analytics, and no external service is contacted. Your data is never sold or shared with third parties.</p>
+    </div>
+    <div class="cookie-section">
+      <h3>Your rights</h3>
+      <p>You can clear your history at any time using the "Clear history" button on the History tab, or by clearing this site's data in your browser settings.</p>
+    </div>
+    <button class="cookie-modal-close" onclick="hideCookieModal()">Close</button>
+  </div>
+</div>
+
+<!-- AUTH PAGE (disabled — login turned off for now)
+<div id="auth-page">
+  <div class="auth-card">
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-login"    onclick="switchAuthTab('login')">Sign in</button>
+      <button class="auth-tab"        id="tab-register" onclick="switchAuthTab('register')">Create account</button>
+    </div>
+    <div class="auth-body">
+      <div id="auth-alert" class="alert alert-error hidden"></div>
+
+      <div id="login-form" class="auth-form">
+        <div class="form-group">
+          <label for="login-email">Email</label>
+          <input type="email" id="login-email" placeholder="your@email.com" autocomplete="email" />
+        </div>
+        <div class="form-group">
+          <label for="login-pass">Password</label>
+          <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password" />
+        </div>
+        <div class="remember-row">
+          <label class="remember-label">
+            <input type="checkbox" id="remember-me" /> Remember me
+          </label>
+          <button class="link-btn" onclick="switchAuthTab('forgot')">Forgot password?</button>
+        </div>
+        <button class="btn-primary" onclick="doLogin()">Sign in</button>
+      </div>
+
+      <div id="register-form" class="auth-form hidden">
+        <div class="form-group">
+          <label for="reg-user">Username</label>
+          <input type="text" id="reg-user" placeholder="Pick a display name" autocomplete="username" />
+        </div>
+        <div class="form-group">
+          <label for="reg-email">Email</label>
+          <input type="email" id="reg-email" placeholder="your@email.com" autocomplete="email" />
+        </div>
+        <div class="form-group">
+          <label for="reg-pass">Password</label>
+          <input type="password" id="reg-pass" placeholder="At least 6 characters" autocomplete="new-password" />
+        </div>
+        <div class="form-group">
+          <label for="reg-pass2">Confirm password</label>
+          <input type="password" id="reg-pass2" placeholder="Repeat password" autocomplete="new-password" />
+        </div>
+        <button class="btn-primary" id="reg-submit-btn" onclick="doRegister()">Create account</button>
+      </div>
+
+      <div id="forgot-form" class="auth-form hidden">
+        <p style="color:var(--text-muted);font-size:14px;line-height:1.6;">Enter your email and we'll send a reset link.</p>
+        <div class="form-group">
+          <label for="forgot-email">Email</label>
+          <input type="email" id="forgot-email" placeholder="your@email.com" autocomplete="email" />
+        </div>
+        <button class="btn-primary" id="forgot-submit-btn" onclick="doForgotPassword()">Send reset link</button>
+        <button class="auth-back" onclick="switchAuthTab('login')">← Back to sign in</button>
+      </div>
+
+      <div id="forgot-sent" class="auth-form hidden">
+        <div style="text-align:center;padding:16px 0 8px;">
+          <div style="font-size:48px;margin-bottom:16px;">📬</div>
+          <p style="font-weight:700;font-size:16px;margin-bottom:10px;">Check your inbox</p>
+          <p style="color:var(--text-muted);font-size:14px;line-height:1.6;">If an account exists for that email, a reset link has been sent. Check spam if you don't see it.</p>
+        </div>
+        <button class="btn-secondary" onclick="switchAuthTab('login')">Back to sign in</button>
+      </div>
+    </div>
+  </div>
+</div>
+-->
+
+<!-- APP -->
+<div id="app">
+  <header class="app-header">
+    <span class="app-title">⏱ Interval Timer</span>
+    <div class="header-right">
+      <!-- Login disabled for now
+      <span class="greeting" id="header-greeting"></span>
+      <button class="signout-btn" onclick="doLogout()">Sign out</button>
+      -->
+      <nav class="app-tabs">
+        <button class="app-tab" id="tab-create"  onclick="navigate('create')">New timer</button>
+        <button class="app-tab" id="tab-history" onclick="navigate('history')">History</button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- HOME (disabled — saved-timer list relied on login/unique ids; see Historik tab instead)
+  <div id="home-page" class="page">
+    <button class="new-timer-btn" onclick="navigate('create')">
+      <span class="plus-icon">+</span> Create new timer
+    </button>
+    <p class="section-label">Your timers</p>
+    <div id="timer-list-container"></div>
+  </div>
+  -->
+
+  <!-- HISTORY (local only, no login/unique ids) -->
+  <div id="history-page" class="page hidden">
+    <p class="section-label">History</p>
+    <div id="history-list-container"></div>
+  </div>
+
+  <!-- CREATE -->
+  <div id="create-page" class="page">
+    <div class="create-header">
+      <h1 class="page-title" id="create-page-title">New timer</h1>
+    </div>
+    <div id="create-alert" class="alert alert-error hidden"></div>
+    <!-- <input type="hidden" id="editing-timer-id" value="" /> -->  <!-- unused: editing a saved timer required login/unique ids -->
+
+    <div class="create-form">
+      <div class="form-group">
+        <label for="timer-name">Name of timer</label>
+        <input type="text" id="timer-name" placeholder="e.g. Morning HIIT" maxlength="50" />
+      </div>
+      <div class="input-row">
+        <div class="form-group">
+          <label for="num-rounds">Rounds</label>
+          <input type="number" id="num-rounds" min="1" max="99" value="3" />
+        </div>
+        <div class="form-group">
+          <label for="num-activities">Exercises per round</label>
+          <input type="number" id="num-activities" min="1" max="20" value="4" />
+        </div>
+      </div>
+      <p class="section-title">Durations (seconds)</p>
+      <div class="input-row">
+        <div class="form-group">
+          <label for="act-time">Exercise time</label>
+          <input type="number" id="act-time" min="1" max="3600" value="40" />
+        </div>
+        <div class="form-group">
+          <label for="act-break">Break between exercises</label>
+          <input type="number" id="act-break" min="0" max="3600" value="20" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="round-break">Break between rounds</label>
+        <input type="number" id="round-break" min="0" max="3600" value="60" />
+      </div>
+      <p class="section-title">Direction of time</p>
+      <div class="direction-options">
+        <div class="direction-option">
+          <input type="radio" name="count-dir" id="dir-down" value="down" checked />
+          <label for="dir-down"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M11 4h2v10h4l-5 6-5-6h4V4z"/></svg><span>Count down</span></label>
+        </div>
+        <div class="direction-option">
+          <input type="radio" name="count-dir" id="dir-up" value="up" />
+          <label for="dir-up"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M13 20h-2V10H7l5-6 5 6h-4v10z"/></svg><span>Count up</span></label>
+        </div>
+      </div>
+      <div>
+        <button class="btn-primary" id="go-btn" onclick="goTimer()" style="width:100%;">GO!</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RUN -->
+  <div id="run-page" class="page hidden">
+    <div class="run-header">
+      <button class="back-btn" onclick="navigate('create')">‹</button>
+      <h2 class="run-timer-name" id="run-timer-name">Timer</h2>
+    </div>
+
+    <div id="run-running">
+      <!-- Ring with countdown overlaid in the centre -->
+      <div class="ring-section">
+        <svg class="ring" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <circle class="ring-bg"   cx="50" cy="50" r="44" />
+          <circle class="ring-fill" id="ring-fill" cx="50" cy="50" r="44"
+            stroke-dasharray="276.46 276.46" stroke-dashoffset="0" />
+        </svg>
+        <div class="countdown-wrap">
+          <div class="phase-label-top"   id="phase-label">Exercise</div>
+          <div class="countdown-display" id="countdown-display">0</div>
+          <div class="phase-label-bottom" id="round-label"></div>
+        </div>
+      </div>
+
+      <div class="progress-pills" id="progress-pills"></div>
+      <div class="run-controls">
+        <button class="ctrl-btn ctrl-small" onclick="engine && engine.reset()" title="Restart">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 5V2L7.5 6 12 10V7c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46A7.93 7.93 0 0020 13c0-4.42-3.58-8-8-8zm-6 8c0-1.01.25-1.97.7-2.8L5.24 8.74A7.93 7.93 0 004 13c0 4.42 3.58 8 8 8v3l4.5-4-4.5-4v3c-3.31 0-6-2.69-6-6z"/></svg>
+        </button>
+        <button class="ctrl-btn ctrl-play"  id="play-pause-btn" onclick="engine && engine.togglePlay()" title="Play / Pause">
+          <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+        </button>
+        <button class="ctrl-btn ctrl-small" onclick="engine && engine.skip()"  title="Skip">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M6 5v14l8.5-7L6 5zm10 0v14h2V5h-2z"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div id="run-done" class="run-done hidden">
+      <div class="done-icon">🎉</div>
+      <div class="done-title">You did it!</div>
+      <div class="done-sub" id="done-sub">Great work!</div>
+      <div class="done-btns">
+        <button class="btn-primary"   onclick="timerRestartFromDone()">Restart</button>
+        <button class="btn-secondary" onclick="navigate('create')">New timer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase SDK (disabled — login & cloud save turned off for now)
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+-->
+
+<script>
+'use strict';
+
+// ═══════════════════════════════════════════════════════
+//  FIREBASE CONFIG (disabled — login & unique-id cloud storage off)
+// ═══════════════════════════════════════════════════════
+/*
+const firebaseConfig = {
+  apiKey:            "AIzaSyDUpd6NgmvoAO9baAZHbt9omjrGK4pE7Q8",
+  authDomain:        "workouttimer-45fd8.firebaseapp.com",
+  projectId:         "workouttimer-45fd8",
+  storageBucket:     "workouttimer-45fd8.firebasestorage.app",
+  messagingSenderId: "709313218971",
+  appId:             "1:709313218971:web:0cb5393422377b1ea4b93e",
+  measurementId:     "G-GZYCGH0X53"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db   = firebase.firestore();
+*/
+
+// ═══════════════════════════════════════════════════════
+//  COOKIE BANNER
+// ═══════════════════════════════════════════════════════
+(function initCookieBanner() {
+  if (!localStorage.getItem('it_cookie_ok')) {
+    document.getElementById('cookie-banner').classList.remove('hidden');
+  }
+})();
+
+function acceptCookies() {
+  localStorage.setItem('it_cookie_ok', '1');
+  document.getElementById('cookie-banner').classList.add('hidden');
+}
+
+function showCookieModal() {
+  document.getElementById('cookie-modal').classList.remove('hidden');
+}
+
+function hideCookieModal() {
+  document.getElementById('cookie-modal').classList.add('hidden');
+}
+
+document.getElementById('cookie-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('cookie-modal')) hideCookieModal();
+});
+
+// ═══════════════════════════════════════════════════════
+//  REMEMBER-ME (disabled — login turned off for now)
+// ═══════════════════════════════════════════════════════
+/*
+function getRemember()    { try { return JSON.parse(localStorage.getItem('it_remember')); } catch { return null; } }
+function setRemember(e,p) { localStorage.setItem('it_remember', JSON.stringify({email:e,password:p})); }
+function clearRemember()  { localStorage.removeItem('it_remember'); }
+*/
+
+// ═══════════════════════════════════════════════════════
+//  AUTH STATE (disabled — login turned off for now)
+// ═══════════════════════════════════════════════════════
+/*
+let currentUser  = null;
+let _registering = false;
+
+auth.onAuthStateChanged(async user => {
+  if (_registering) return;
+  if (user) {
+    try {
+      const doc = await db.collection('users').doc(user.uid).get();
+      const p   = doc.exists ? doc.data() : {};
+      currentUser = { uid: user.uid, username: p.username || user.email, email: user.email };
+      showApp(currentUser.username);
+      navigate('home');
+    } catch (e) {
+      showAuthAlert('Failed to load profile. Please try again.');
+      await auth.signOut();
+    }
+  } else {
+    currentUser = null;
+    timerStop(); clearConfetti();
+    document.getElementById('app').classList.add('hidden');
+    document.getElementById('auth-page').classList.remove('hidden');
+    const rem = getRemember();
+    document.getElementById('login-email').value   = rem?.email    || '';
+    document.getElementById('login-pass').value    = rem?.password || '';
+    document.getElementById('remember-me').checked = !!rem;
+  }
+});
+
+function showApp(username) {
+  document.getElementById('auth-page').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  document.getElementById('header-greeting').textContent = username;
+}
+*/
+
+// App entry point while login is disabled: land straight on the Create page.
+document.addEventListener('DOMContentLoaded', () => { navigate('create'); });
+
+// ═══════════════════════════════════════════════════════
+//  AUTH UI (disabled — login turned off for now)
+// ═══════════════════════════════════════════════════════
+/*
+const AUTH_FORMS = ['login-form','register-form','forgot-form','forgot-sent'];
+
+function hideAllAuthForms() { AUTH_FORMS.forEach(id => document.getElementById(id).classList.add('hidden')); }
+
+function switchAuthTab(tab) {
+  document.getElementById('auth-alert').classList.add('hidden');
+  hideAllAuthForms();
+  const map = {login:'login-form',register:'register-form',forgot:'forgot-form',sent:'forgot-sent'};
+  document.getElementById(map[tab]||'login-form').classList.remove('hidden');
+  document.getElementById('tab-login').classList.toggle('active',    tab==='login');
+  document.getElementById('tab-register').classList.toggle('active', tab==='register');
+}
+
+function showAuthAlert(msg) {
+  const el = document.getElementById('auth-alert');
+  el.textContent = msg; el.classList.remove('hidden');
+}
+
+function fbErr(code) {
+  return ({
+    'auth/user-not-found':         'No account found with this email.',
+    'auth/wrong-password':         'Incorrect password.',
+    'auth/invalid-credential':     'Incorrect email or password.',
+    'auth/email-already-in-use':   'An account with this email already exists.',
+    'auth/invalid-email':          'Please enter a valid email address.',
+    'auth/weak-password':          'Password must be at least 6 characters.',
+    'auth/too-many-requests':      'Too many attempts. Please try again later.',
+    'auth/network-request-failed': 'Network error. Please check your connection.',
+    'auth/operation-not-allowed':  'Email/Password sign-in is not enabled in Firebase Console → Authentication → Sign-in method.',
+  })[code] || `Firebase error: ${code||'unknown'}`;
+}
+*/
+
+// ═══════════════════════════════════════════════════════
+//  AUTH ACTIONS (disabled — login turned off for now)
+// ═══════════════════════════════════════════════════════
+/*
+async function doLogin() {
+  const email    = (document.getElementById('login-email').value||'').trim();
+  const password = document.getElementById('login-pass').value;
+  const remember = document.getElementById('remember-me').checked;
+  if (!email||!password) return showAuthAlert('Please enter your email and password.');
+  try {
+    await auth.setPersistence(remember
+      ? firebase.auth.Auth.Persistence.LOCAL
+      : firebase.auth.Auth.Persistence.SESSION);
+    await auth.signInWithEmailAndPassword(email, password);
+    if (remember) setRemember(email, password); else clearRemember();
+  } catch (e) { showAuthAlert(fbErr(e.code)); }
+}
+
+async function doRegister() {
+  const username  = (document.getElementById('reg-user').value||'').trim();
+  const email     = (document.getElementById('reg-email').value||'').trim().toLowerCase();
+  const password  = document.getElementById('reg-pass').value;
+  const password2 = document.getElementById('reg-pass2').value;
+  if (!username)              return showAuthAlert('Please choose a username.');
+  if (username.length < 2)    return showAuthAlert('Username must be at least 2 characters.');
+  if (!email||!email.includes('@')) return showAuthAlert('Please enter a valid email.');
+  if (!password)              return showAuthAlert('Please choose a password.');
+  if (password.length < 6)    return showAuthAlert('Password must be at least 6 characters.');
+  if (password !== password2) return showAuthAlert('Passwords do not match.');
+
+  const btn = document.getElementById('reg-submit-btn');
+  btn.disabled = true; btn.textContent = 'Creating…';
+  _registering = true;
+  let cred = null;
+  try {
+    cred = await auth.createUserWithEmailAndPassword(email, password);
+    await db.collection('users').doc(cred.user.uid).set({
+      username, email,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    _registering = false;
+    currentUser = { uid: cred.user.uid, username, email };
+    showApp(username);
+    navigate('home');
+  } catch (e) {
+    _registering = false;
+    btn.disabled = false; btn.textContent = 'Create account';
+    if (cred?.user) { try { await cred.user.delete(); } catch(_){} }
+    showAuthAlert(fbErr(e.code));
+  }
+}
+
+async function doLogout() {
+  timerStop(); clearConfetti();
+  await auth.signOut();
+}
+
+async function doForgotPassword() {
+  const email = (document.getElementById('forgot-email').value||'').trim();
+  if (!email)               return showAuthAlert('Please enter your email address.');
+  if (!email.includes('@')) return showAuthAlert('Please enter a valid email address.');
+  const btn = document.getElementById('forgot-submit-btn');
+  btn.disabled = true; btn.textContent = 'Sending…';
+  try { await auth.sendPasswordResetEmail(email); } catch(_) {}
+  btn.disabled = false; btn.textContent = 'Send reset link';
+  hideAllAuthForms();
+  document.getElementById('forgot-sent').classList.remove('hidden');
+  document.getElementById('tab-login').classList.remove('active');
+  document.getElementById('tab-register').classList.remove('active');
+}
+*/
+
+// ═══════════════════════════════════════════════════════
+//  FIRESTORE — TIMER CRUD (disabled — unique-id cloud storage off)
+// ═══════════════════════════════════════════════════════
+/*
+function timersRef() { return db.collection('users').doc(currentUser.uid).collection('timers'); }
+
+async function loadTimers() {
+  const snap = await timersRef().orderBy('createdAt','asc').get();
+  return snap.docs.map(d => ({...d.data(), id:d.id}));
+}
+
+async function saveTimerToDb(timer) {
+  if (timer.id) {
+    const {id, createdAt, ...data} = timer;
+    await timersRef().doc(id).update({...data, updatedAt: firebase.firestore.FieldValue.serverTimestamp()});
+    return id;
+  } else {
+    const ref = await timersRef().add({...timer, createdAt: firebase.firestore.FieldValue.serverTimestamp()});
+    return ref.id;
+  }
+}
+
+async function deleteTimerFromDb(id) { await timersRef().doc(id).delete(); }
+
+async function getTimerById(id) {
+  const doc = await timersRef().doc(id).get();
+  return doc.exists ? {...doc.data(), id:doc.id} : null;
+}
+*/
+
+// ═══════════════════════════════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════════════════════════════
+function showPage(id) {
+  ['create-page','run-page','history-page'].forEach(p =>
+    document.getElementById(p).classList.toggle('hidden', p !== id));
+  document.getElementById('tab-create').classList.toggle('active', id==='create-page');
+  document.getElementById('tab-history').classList.toggle('active', id==='history-page');
+}
+
+function navigate(page) {
+  // 'home' (saved-timer list) is disabled along with login/unique ids — see HOME block above.
+  if (page==='create')       { timerStop(); clearConfetti(); showPage('create-page');  renderCreate(); }
+  else if (page==='run')     { showPage('run-page');    renderRun(); }
+  else if (page==='history') { timerStop(); clearConfetti(); showPage('history-page'); renderHistory(); }
+}
+
+// ═══════════════════════════════════════════════════════
+//  HOME PAGE (disabled — saved-timer list relied on login/unique ids)
+// ═══════════════════════════════════════════════════════
+/*
+async function renderHome() {
+  const c = document.getElementById('timer-list-container');
+  c.innerHTML = '<div style="text-align:center;padding:40px 0;color:var(--text-muted);">Loading…</div>';
+  try {
+    const timers = await loadTimers();
+    if (!timers.length) {
+      c.innerHTML = `<div class="empty-state"><div class="empty-icon">⏱</div><p>No timers yet.<br>Create your first one above!</p></div>`;
+      return;
+    }
+    c.innerHTML = '';
+    const list = document.createElement('div');
+    list.className = 'timer-list';
+    timers.forEach(t => {
+      const s = (t.rounds||0)*(t.activitiesPerRound||0)*(t.activityTime||0)
+        + Math.max(0,(t.rounds||0)*(t.activitiesPerRound||0)-1)*(t.actBreak||0)
+        + Math.max(0,(t.rounds||0)-1)*(t.roundBreak||0);
+      const mm=String(Math.floor(s/60)).padStart(2,'0'), ss=String(s%60).padStart(2,'0');
+      const item = document.createElement('div');
+      item.className = 'timer-item';
+      item.innerHTML = `
+        <div class="timer-item-info">
+          <div class="timer-item-name">${esc(t.name)}</div>
+          <div class="timer-item-meta">${t.rounds} rounds · ${t.activitiesPerRound} exercises · ~${mm}:${ss}</div>
+        </div>
+        <button class="timer-item-delete" onclick="event.stopPropagation();deleteTimer('${t.id}')" title="Delete">🗑</button>`;
+      item.addEventListener('click', () => navigate('run', t.id));
+      list.appendChild(item);
+    });
+    c.appendChild(list);
+  } catch(e) {
+    c.innerHTML = '<div style="color:var(--danger);text-align:center;padding:24px;">Failed to load timers. Check your connection.</div>';
+  }
+}
+
+async function deleteTimer(id) {
+  if (!confirm('Delete this timer?')) return;
+  try { await deleteTimerFromDb(id); await renderHome(); }
+  catch(_) { alert('Failed to delete. Please try again.'); }
+}
+*/
+
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ═══════════════════════════════════════════════════════
+//  LOCAL HISTORY  (stored in this browser's cache only — no login/unique ids)
+// ═══════════════════════════════════════════════════════
+const HISTORY_KEY = 'it_history';
+
+function loadHistory() {
+  try { return JSON.parse(localStorage.getItem(HISTORY_KEY)) || []; }
+  catch(_) { return []; }
+}
+
+function addHistoryEntry(timer) {
+  const list = loadHistory();
+  list.unshift({...timer, ranAt: Date.now()});
+  if (list.length > 50) list.length = 50;
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(list));
+}
+
+function clearHistory() {
+  if (!confirm('Clear all history?')) return;
+  localStorage.removeItem(HISTORY_KEY);
+  renderHistory();
+}
+
+function runFromHistory(idx) {
+  const list = loadHistory();
+  const t = list[idx];
+  if (!t) return;
+  _pendingTimer = {
+    name: t.name, rounds: t.rounds, activitiesPerRound: t.activitiesPerRound,
+    activityTime: t.activityTime, actBreak: t.actBreak, roundBreak: t.roundBreak,
+    countDirection: t.countDirection
+  };
+  navigate('run');
+}
+
+function renderHistory() {
+  const c = document.getElementById('history-list-container');
+  const list = loadHistory();
+  if (!list.length) {
+    c.innerHTML = `<div class="empty-state"><div class="empty-icon">🕓</div><p>No timers yet.<br>Timers you run with "GO!" will show up here.</p></div>`;
+    return;
+  }
+  const rows = list.map((t,i) => {
+    const s = (t.rounds||0)*(t.activitiesPerRound||0)*(t.activityTime||0)
+      + Math.max(0,(t.rounds||0)*(t.activitiesPerRound||0)-1)*(t.actBreak||0)
+      + Math.max(0,(t.rounds||0)-1)*(t.roundBreak||0);
+    const mm=String(Math.floor(s/60)).padStart(2,'0'), ss=String(s%60).padStart(2,'0');
+    const d = new Date(t.ranAt);
+    const when = d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+    return `
+      <div class="timer-item" onclick="runFromHistory(${i})">
+        <div class="timer-item-info">
+          <div class="timer-item-name">${esc(t.name)}</div>
+          <div class="timer-item-meta">${when} · ${t.rounds} rounds · ${t.activitiesPerRound} exercises · ~${mm}:${ss}</div>
+        </div>
+      </div>`;
+  }).join('');
+  c.innerHTML = `<div class="timer-list">${rows}</div>
+    <button class="btn-secondary" style="width:100%;margin-top:16px;" onclick="clearHistory()">Clear history</button>`;
+}
+
+// ═══════════════════════════════════════════════════════
+//  CREATE PAGE
+// ═══════════════════════════════════════════════════════
+function renderCreate() {
+  document.getElementById('create-alert').classList.add('hidden');
+  // Editing a previously saved timer by id is disabled along with login/unique ids;
+  // "GO!" always starts a fresh in-memory timer, never persisted to an account.
+  document.getElementById('timer-name').value     = '';
+  document.getElementById('num-rounds').value     = '3';
+  document.getElementById('num-activities').value = '4';
+  document.getElementById('act-time').value       = '40';
+  document.getElementById('act-break').value      = '20';
+  document.getElementById('round-break').value    = '60';
+  document.getElementById('dir-down').checked     = true;
+}
+
+function goTimer() {
+  const name              = (document.getElementById('timer-name').value||'').trim();
+  const rounds            = parseInt(document.getElementById('num-rounds').value)||0;
+  const activitiesPerRound= parseInt(document.getElementById('num-activities').value)||0;
+  const activityTime      = parseInt(document.getElementById('act-time').value)||0;
+  const actBreak          = parseInt(document.getElementById('act-break').value)||0;
+  const roundBreak        = parseInt(document.getElementById('round-break').value)||0;
+  const countDirection    = document.querySelector('input[name="count-dir"]:checked')?.value||'down';
+  const alertEl           = document.getElementById('create-alert');
+  alertEl.classList.add('hidden');
+  if (!name)                  { alertEl.textContent='Please enter a timer name.';         alertEl.classList.remove('hidden'); return; }
+  if (rounds<1)               { alertEl.textContent='Rounds must be at least 1.';         alertEl.classList.remove('hidden'); return; }
+  if (activitiesPerRound<1)   { alertEl.textContent='Exercises must be at least 1.';      alertEl.classList.remove('hidden'); return; }
+  if (activityTime<1)         { alertEl.textContent='Exercise time must be at least 1 s.';alertEl.classList.remove('hidden'); return; }
+
+  // Not saved to an account — this only lives in memory for the run, plus a
+  // lightweight local copy in "Historik" so it can be found again on this device.
+  const timer = {name,rounds,activitiesPerRound,activityTime,actBreak,roundBreak,countDirection};
+  _pendingTimer = timer;
+  addHistoryEntry(timer);
+  navigate('run');
+}
+
+// ═══════════════════════════════════════════════════════
+//  RUN PAGE
+// ═══════════════════════════════════════════════════════
+let engine=null, _pendingTimer=null;
+
+function renderRun() {
+  timerStop();
+  if (!_pendingTimer) return navigate('create');
+  document.getElementById('run-timer-name').textContent = _pendingTimer.name;
+  document.getElementById('run-running').classList.remove('hidden');
+  document.getElementById('run-done').classList.add('hidden');
+  engine = new TimerEngine(_pendingTimer);
+  engine.init();
+}
+
+function timerStop() { if (engine) { engine.pause(); engine=null; } }
+function timerRestartFromDone() { renderRun(); }
+
+// ═══════════════════════════════════════════════════════
+//  TIMER ENGINE
+// ═══════════════════════════════════════════════════════
+const CIRCUMFERENCE = 2 * Math.PI * 44;
+
+const ICON_PLAY  = '<svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
+const ICON_PAUSE = '<svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>';
+function setPlayPauseIcon(playing) {
+  document.getElementById('play-pause-btn').innerHTML = playing ? ICON_PAUSE : ICON_PLAY;
+}
+
+class TimerEngine {
+  constructor(cfg) {
+    this.cfg=cfg; this.seq=this._buildSequence(); this.step=0;
+    this._elapsed=0; this._stepStart=null; this._rafId=null;
+    this._playing=false; this._lastSec=-1;
+  }
+
+  _buildSequence() {
+    const {rounds,activitiesPerRound,activityTime,actBreak,roundBreak}=this.cfg;
+    const seq=[];
+    for (let r=1;r<=rounds;r++) {
+      for (let a=1;a<=activitiesPerRound;a++) {
+        seq.push({type:'exercise',round:r,activity:a,duration:activityTime,
+          label:`Exercise ${a}/${activitiesPerRound}`,roundLabel:`Round ${r}/${rounds}`});
+        const lastAct=a===activitiesPerRound, lastRound=r===rounds;
+        if (!lastAct&&actBreak>0) seq.push({type:'act-break',round:r,duration:actBreak,label:'Rest'});
+        if (lastAct&&!lastRound&&roundBreak>0) seq.push({type:'round-break',round:r,duration:roundBreak,label:`Round ${r} done — rest`});
+      }
+    }
+    return seq;
+  }
+
+  init() {
+    this._renderPills(); this._updatePills();
+    const s=this.seq[0];
+    if (s) { this._renderDisplay(0,s.duration); this._renderRing(0,s.duration); this._setLabels(s); }
+    setPlayPauseIcon(false);
+    document.getElementById('run-done').classList.add('hidden');
+    document.getElementById('run-running').classList.remove('hidden');
+  }
+
+  _renderPills() {
+    const c=document.getElementById('progress-pills'); c.innerHTML='';
+    this.seq.forEach((s,i)=>{
+      if (s.type!=='exercise') return;
+      const p=document.createElement('div'); p.className='pill'; p.dataset.idx=i; c.appendChild(p);
+    });
+  }
+
+  _updatePills() {
+    document.querySelectorAll('#progress-pills .pill').forEach(p=>{
+      const idx=parseInt(p.dataset.idx);
+      p.classList.remove('active','done');
+      if (idx===this.step) p.classList.add('active');
+      else if (idx<this.step) p.classList.add('done');
+    });
+  }
+
+  togglePlay() { this._playing ? this.pause() : this.play(); }
+
+  play() {
+    if (this._playing) return;
+    this._playing=true;
+    setPlayPauseIcon(true);
+    this._stepStart=performance.now()-this._elapsed*1000;
+    this._rafId=requestAnimationFrame(ts=>this._rafLoop(ts));
+  }
+
+  pause() {
+    if (!this._playing) return;
+    this._playing=false;
+    setPlayPauseIcon(false);
+    this._elapsed=(performance.now()-this._stepStart)/1000;
+    if (this._rafId){cancelAnimationFrame(this._rafId);this._rafId=null;}
+  }
+
+  reset() { this.pause(); this.step=0; this._elapsed=0; this._lastSec=-1; this.init(); }
+  skip()  { this._advance(); }
+
+  _rafLoop(ts) {
+    if (!this._playing) return;
+    const elapsed=(ts-this._stepStart)/1000;
+    const s=this.seq[this.step]; if (!s) return;
+    this._renderRing(elapsed,s.duration);
+    this._renderDisplay(elapsed,s.duration);
+    if (elapsed>=s.duration) { this._elapsed=0; this._lastSec=-1; playPing(); this._advance(); return; }
+    this._rafId=requestAnimationFrame(ts2=>this._rafLoop(ts2));
+  }
+
+  _advance() {
+    this.step++; this._elapsed=0; this._lastSec=-1;
+    if (this.step>=this.seq.length) { this.pause(); this._showDone(); return; }
+    this._updatePills();
+    const s=this.seq[this.step];
+    this._setLabels(s);
+    this._renderDisplay(0,s.duration); this._renderRing(0,s.duration);
+    if (this._playing) { this._stepStart=performance.now(); this._rafId=requestAnimationFrame(ts=>this._rafLoop(ts)); }
+  }
+
+  _setLabels(s) {
+    const label = s.label||'';
+    const top = document.getElementById('phase-label');
+    top.textContent = label;
+    top.classList.toggle('long', label.length > 14);
+    document.getElementById('round-label').textContent = s.roundLabel||'';
+  }
+
+  _renderRing(elapsed,duration) {
+    const p=Math.min(elapsed/duration,1);
+    const offset=this.cfg.countDirection==='up' ? CIRCUMFERENCE*(1-p) : CIRCUMFERENCE*p;
+    document.getElementById('ring-fill').setAttribute('stroke-dashoffset',offset.toFixed(2));
+  }
+
+  _renderDisplay(elapsed,duration) {
+    const sec=Math.max(0, this.cfg.countDirection==='up' ? Math.floor(elapsed) : Math.ceil(duration-elapsed));
+    if (sec===this._lastSec) return;
+    this._lastSec=sec;
+    const mm=String(Math.floor(sec/60)).padStart(2,'0'), ss=String(sec%60).padStart(2,'0');
+    document.getElementById('countdown-display').textContent = sec>=60 ? `${mm}:${ss}` : String(sec);
+  }
+
+  _showDone() {
+    document.getElementById('run-done').classList.remove('hidden');
+    document.getElementById('run-running').classList.add('hidden');
+    const {rounds,activitiesPerRound}=this.cfg;
+    document.getElementById('done-sub').textContent=`${rounds} rounds × ${activitiesPerRound} exercises completed!`;
+    playCelebration(); launchConfetti();
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+//  SOUNDS
+// ═══════════════════════════════════════════════════════
+let _audioCtx=null;
+function getAudioCtx() { if (!_audioCtx) _audioCtx=new (window.AudioContext||window.webkitAudioContext)(); return _audioCtx; }
+
+function playPing() {
+  try {
+    const ctx=getAudioCtx(),osc=ctx.createOscillator(),g=ctx.createGain();
+    osc.connect(g);g.connect(ctx.destination);osc.type='sine';osc.frequency.value=1760;
+    g.gain.setValueAtTime(0.3,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.12);
+    osc.start();osc.stop(ctx.currentTime+0.12);
+  } catch(_){}
+}
+
+function playCelebration() {
+  try {
+    const ctx=getAudioCtx();
+    [523,659,784,1047].forEach((freq,i)=>{
+      const osc=ctx.createOscillator(),g=ctx.createGain();
+      osc.connect(g);g.connect(ctx.destination);osc.type='sine';osc.frequency.value=freq;
+      const t=ctx.currentTime+i*0.14,hold=i===3?0.55:0.12;
+      g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(0.35,t+0.05);
+      g.gain.setValueAtTime(0.35,t+0.05);g.gain.exponentialRampToValueAtTime(0.001,t+0.05+hold);
+      osc.start(t);osc.stop(t+0.05+hold+0.05);
+    });
+  } catch(_){}
+}
+
+// ═══════════════════════════════════════════════════════
+//  CONFETTI
+// ═══════════════════════════════════════════════════════
+let _cRaf=null,_cCanvas=null;
+
+function launchConfetti() {
+  clearConfetti();
+  const canvas=document.createElement('canvas');
+  canvas.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999;';
+  document.body.appendChild(canvas); _cCanvas=canvas;
+  const ctx=canvas.getContext('2d');
+  canvas.width=window.innerWidth; canvas.height=window.innerHeight;
+  const colors=['#7c6fe0','#e07c7c','#7ce0a0','#e0c87c','#7cb8e0','#e07cc8'];
+  const ps=Array.from({length:160},()=>({
+    x:Math.random()*canvas.width, y:-20-Math.random()*100,
+    vx:(Math.random()-.5)*4, vy:2+Math.random()*4,
+    w:6+Math.random()*8, h:4+Math.random()*6,
+    color:colors[Math.floor(Math.random()*colors.length)],
+    angle:Math.random()*Math.PI*2, spin:(Math.random()-.5)*.2,
+  }));
+  const start=performance.now(),FADE=2800,TOTAL=3800;
+  function frame(ts) {
+    const el=ts-start; if(el>TOTAL){clearConfetti();return;}
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    const alpha=el<FADE?1:1-(el-FADE)/(TOTAL-FADE);
+    ps.forEach(p=>{
+      p.x+=p.vx;p.vy*=1.002;p.y+=p.vy;p.vx*=.99;p.angle+=p.spin;
+      ctx.save();ctx.globalAlpha=Math.max(0,alpha);ctx.translate(p.x,p.y);ctx.rotate(p.angle);
+      ctx.fillStyle=p.color;ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);ctx.restore();
+    });
+    _cRaf=requestAnimationFrame(frame);
+  }
+  _cRaf=requestAnimationFrame(frame);
+}
+
+function clearConfetti() {
+  if(_cRaf){cancelAnimationFrame(_cRaf);_cRaf=null;}
+  if(_cCanvas){_cCanvas.remove();_cCanvas=null;}
+}
+
+// ═══════════════════════════════════════════════════════
+//  KEYBOARD SHORTCUTS (disabled — login turned off for now)
+// ═══════════════════════════════════════════════════════
+/*
+(function(){
+  [['login-email',doLogin],['login-pass',doLogin],
+   ['reg-user',doRegister],['reg-email',doRegister],['reg-pass',doRegister],['reg-pass2',doRegister],
+   ['forgot-email',doForgotPassword]
+  ].forEach(([id,fn])=>{
+    const el=document.getElementById(id);
+    if(el) el.addEventListener('keydown',e=>{if(e.key==='Enter')fn();});
+  });
+})();
+*/
+</script>
+</body>
+</html>

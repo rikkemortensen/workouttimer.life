@@ -1,0 +1,16 @@
+{
+  "name": "interval-timer-tests",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Playwright system tests for the Interval Timer app",
+  "scripts": {
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "test:headed": "playwright test --headed",
+    "report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.48.0",
+    "http-server": "^14.1.1"
+  }
+}
