@@ -1,7 +1,6 @@
 # Interval Timer
 
-A single-file interval/HIIT timer (`index.html`). Login and cloud sync are
-currently disabled (see comments in `index.html`) — the app runs entirely
+A single-file interval (`index.html`). The app runs entirely
 client-side, with run history kept in the browser's `localStorage`.
 
 ## Running the tests locally
