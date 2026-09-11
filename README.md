@@ -1,7 +1,8 @@
 # Interval Timer
 
 A single-file interval (`index.html`). The app runs entirely
-client-side, with run history kept in the browser's `localStorage`.
+client-side, with run history kept in the browser's `localStorage`. 
+Published with Netlify. 
 
 ## Running the tests locally
 
